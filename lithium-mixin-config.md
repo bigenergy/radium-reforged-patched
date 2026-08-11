@@ -269,6 +269,10 @@ Entity movement uses optimized block access and optimized and delayed entity acc
 Requirements:
 - `mixin.util.chunk_access=true`  
   
+### `mixin.entity.collisions.pushable_cache`
+(default: `true`)  
+The result of LivingEntity#isPushable is reused for the rest of the tick it was computed in  
+  
 ### `mixin.entity.collisions.unpushable_cramming`
 (default: `true`)  
 In chunks with many mobs in ladders a separate list of pushable entities for cramming tests is used  

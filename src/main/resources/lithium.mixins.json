@@ -116,6 +116,7 @@
     "entity.collisions.fluid.EntityMixin",
     "entity.collisions.intersection.WorldMixin",
     "entity.collisions.movement.EntityMixin",
+    "entity.collisions.pushable_cache.LivingEntityMixin",
     "entity.collisions.unpushable_cramming.AbstractMinecartEntityMixin",
     "entity.collisions.unpushable_cramming.BoatEntityMixin",
     "entity.collisions.unpushable_cramming.EntityMixin",
