@@ -11,6 +11,6 @@ updateJSONURL = "https://api.modrinth.com/updates/radium/forge_updates.json"
 logoFile = "icon.png"
 description = "A Forge port of mod designed to improve the general performance of Minecraft without breaking things"
 credits = "JellySquid, 2No2Name"
-authors = "dima_dencep, NanoLive"
+authors = "dima_dencep, NanoLive, Big_Energy"
 displayURL = "https://curseforge.com/minecraft/mc-mods/radium-reforged"
 provides=["lithium"]
