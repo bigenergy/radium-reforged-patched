@@ -178,6 +178,10 @@ Various world chunk optimizations
 (default: `true`)  
 Allow grouping entity classes for faster entity access, e.g. boats and shulkers  
   
+### `mixin.chunk.entity_status_iteration`
+(default: `true`)  
+Iterate a copy of a section's entities while its tracking status changes, so callbacks that discard entities cannot break the traversal  
+  
 ### `mixin.chunk.no_locking`
 (default: `true`)  
 Remove debug checks in block access code  
