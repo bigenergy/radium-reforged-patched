@@ -1,6 +1,5 @@
 package me.jellysquid.mods.lithium.mixin.alloc.nbt;
 
-import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -55,8 +54,32 @@ public class NbtCompoundMixin {
      */
     @Overwrite
     public NbtCompound copy() {
-        // [VanillaCopy] HashMap is replaced with Object2ObjectOpenHashMap
-        var map = new Object2ObjectOpenHashMap<>(Maps.transformValues(this.entries, NbtElement::copy));
+        // [VanillaCopy] HashMap is replaced with Object2ObjectOpenHashMap.
+        //
+        // The map is filled eagerly instead of being handed a lazy view.
+        //
+        // The previous implementation passed Maps.transformValues(...) straight
+        // into the fastutil constructor. That view is lazy: the constructor asks
+        // it for size(), sizes the table from that answer, and only afterwards
+        // walks entrySet() — invoking NbtElement::copy once per getValue() call
+        // along the way. Any change to the backing map between those two steps,
+        // or a second traversal of the same view, leaves the new map with a
+        // table that disagrees with its size field.
+        //
+        // A fastutil map in that state does not fail on construction. It fails
+        // later, on the first iteration that walks into the displaced-entry
+        // path, as "Cannot invoke ObjectArrayList.get(int) because this.wrapped
+        // is null" — far from the copy that actually produced it. See issue #52.
+        //
+        // Building it explicitly also drops the Guava wrapper allocation and
+        // guarantees copy() runs exactly once per value, which is what the
+        // vanilla method promises.
+        Object2ObjectOpenHashMap<String, NbtElement> map = new Object2ObjectOpenHashMap<>(this.entries.size());
+
+        for (Map.Entry<String, NbtElement> entry : this.entries.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().copy());
+        }
+
         return new NbtCompound(map);
     }
 
