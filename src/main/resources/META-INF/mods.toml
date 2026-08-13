@@ -1,16 +1,16 @@
 modLoader = "javafml"
 loaderVersion = "*"
-issueTrackerURL = "https://github.com/Reforged-Hub/radium-upstream/issues"
+issueTrackerURL = "https://github.com/bigenergy/radium-reforged-patched/issues"
 license = "LGPL-3.0-only"
 
 [[mods]]
 modId = "radium"
 version = "${version}"
-displayName = "Radium"
-updateJSONURL = "https://api.modrinth.com/updates/radium/forge_updates.json"
+displayName = "Radium Re-Reforged"
+#updateJSONURL = "https://api.modrinth.com/updates/radium/forge_updates.json"
 logoFile = "icon.png"
 description = "A Forge port of mod designed to improve the general performance of Minecraft without breaking things"
 credits = "JellySquid, 2No2Name"
 authors = "dima_dencep, NanoLive, Big_Energy"
-displayURL = "https://curseforge.com/minecraft/mc-mods/radium-reforged"
+displayURL = "https://www.curseforge.com/minecraft/mc-mods/radium-reforged"
 provides=["lithium"]
