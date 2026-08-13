@@ -1,84 +1,57 @@
-name: Publish Release
+name: Build
+
+# Публикация убрана: релизы выкладываются вручную.
+#
+# Что тут было и почему снято:
+#   • ./gradlew build publish — задача publish льёт артефакты в мавен
+#     апстрима (repo.redlance.org). Секретов MAVEN_USERNAME/PASSWORD в
+#     форке нет, поэтому шаг падал с ошибкой авторизации на каждом пуше;
+#   • шаги Modrinth и CurseForge — там стояли идентификаторы проектов
+#     АПСТРИМА (modrinth 2gvRmQXx, curseforge 570017). До них сборка не
+#     доходила, но оставлять их в форке нельзя было в любом случае;
+#   • генератор чейнджлога и чтение gradle.properties нужны были только
+#     тем шагам и ушли вместе с ними.
+#
+# Осталась сборка. Она полезна сама по себе: ловит ошибки компиляции до
+# того, как о них узнаешь локально, — например расхождения Fabric и Forge
+# при переносе миксинов из апстрима.
+#
+# Готовые джарники кладутся в артефакты запуска, оттуда их и забирать
+# для ручной публикации.
 
 on:
   push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
 
+      # fetch-depth: 0 больше не нужен: полная история требовалась
+      # только для git describe в генераторе чейнджлога.
       - name: Checkout sources
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
+          cache: gradle
 
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
 
-      - name: Upload assets to releases
-        run: ./gradlew build publish
-        env:
-          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+      - name: Build
+        run: ./gradlew build
 
-      - name: Get previous tag
-        run: echo "previous_tag=$(git rev-parse $(git describe --tags --abbrev=0 --exclude *-dev) 2>/dev/null || echo '')" >> $GITHUB_ENV
-
-      - name: Build Changelog
-        id: build_changelog
-        uses: metcalfc/changelog-generator@v4.1.0
-        if: env.previous_tag
+      # if-no-files-found: error — чтобы «зелёная» сборка без джарников
+      # не проходила молча.
+      - name: Upload jars
+        uses: actions/upload-artifact@v4
         with:
-          myToken: ${{ secrets.GITHUB_TOKEN }}
-          head-ref: ${{ github.ref }}
-          base-ref: ${{ env.previous_tag }}
-          fetch: false
-
-      - name: Read value from Properties-file
-        id: read_property
-        uses: christian-draeger/read-properties@1.1.1
-        with:
-          path: './gradle.properties'
-          properties: 'mod_version minecraft_version'
-
-      - name: Publish to Modrinth & CurseForge
-        uses: Kir-Antipov/mc-publish@v3.3
-        with:
-          modrinth-id: 2gvRmQXx
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-
-          curseforge-id: 570017
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-          name: Radium ${{ steps.read_property.outputs.mod_version }} for ${{ steps.read_property.outputs.minecraft_version }}
-
-          version: ${{ steps.read_property.outputs.mod_version }}
-
-          changelog: ${{steps.build_changelog.outputs.changelog}}
-          
-          files: |
-            build/libs/!(*-@(api|dev|sources|javadoc)).jar
-
-          version-type: release
-
-          loaders: |
-            forge
-            neoforge
-
-          game-versions: |
-            ${{ steps.read_property.outputs.minecraft_version }}
-
-          dependencies: |
-            canary(incompatible)
-
-          java: |
-            17
+          name: radium-${{ github.sha }}
+          path: build/libs/*.jar
+          if-no-files-found: error
