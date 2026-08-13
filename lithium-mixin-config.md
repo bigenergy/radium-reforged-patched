@@ -284,6 +284,9 @@ Requirements:
 Entity movement uses optimized block access and optimized and delayed entity access  
 Requirements:
 - `mixin.util.chunk_access=true`  
+Automatically disabled when Aperture Innovations is installed: this mixin `@Overwrite`s
+`Entity#adjustMovementForCollisions`, which silently drops that mod's own injection into the
+same method and makes its portals impossible to enter.  
   
 ### `mixin.entity.collisions.pushable_cache`
 (default: `true`)  

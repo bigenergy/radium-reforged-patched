@@ -21,6 +21,22 @@ public class LithiumConfig extends AbstractCaffeineConfigMixinPlugin {
             config.getOption("mixin.alloc.blockstate").addModOverride(false, "ferritecore");
         }
 
+        // Aperture Innovations: с включённым mixin.entity.collisions.movement
+        // в его порталы нельзя войти.
+        //
+        // Причина в том, что этот миксин делает @Overwrite вани́льного
+        // Entity.adjustMovementForCollisions, то есть заменяет тело метода
+        // целиком. Aperture врезается в тот же метод, чтобы пропускать
+        // игрока сквозь поверхность портала, и в переписанном теле её точка
+        // внедрения не находится — врезка молча не срабатывает.
+        //
+        // Обходной путь описан на странице самого мода: выставить
+        // mixin.entity.collisions.movement=false. Делаем это за игрока:
+        // знать о конфиге ради работающих порталов он не обязан.
+        if (LoadingModList.get().getModFileById("aperture_innovations") != null) {
+            config.getOption("mixin.entity.collisions.movement").addModOverride(false, "aperture_innovations");
+        }
+
         Option option = config.getOption("mixin.block.hopper.worldedit_compat");
         if (!option.isEnabled() && WorldEditCompat.WORLD_EDIT_PRESENT) {
             option.addModOverride(true, "radium");
