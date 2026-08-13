@@ -80,6 +80,18 @@ Keep track of AI memory changes to skip checking AI task memory prerequisites
 (default: `true`)  
 Replace Stream code of AI tasks with more traditional iteration.  
   
+### `mixin.ai.useless_sensors`
+(default: `true`)  
+Disabling useless brain sensors to avoid useless sensing calculations.  
+  
+### `mixin.ai.useless_sensors.goat_item_sensor`
+(default: `true`)  
+Disable the goat item sensor whose memories are never used.  
+  
+### `mixin.ai.useless_sensors.parent_animal_sensor`
+(default: `true`)  
+Disable the parent animal sensor when an animal is not a baby. Would differ from vanilla in the case where an adult animal turns back into a baby animal, as the sensor information is refreshed, leading to a less-outdated value in the first second of turning back into a baby animal. However, there is no way to turn an animal back into a baby without reinitializing the brain, creating entirely new sensors.  
+  
 ### `mixin.alloc`
 (default: `true`)  
 Patches that reduce memory allocations  
@@ -139,6 +151,10 @@ NBT tags use a fastutil hashmap instead of a standard HashMap
 ### `mixin.block`
 (default: `true`)  
 Optimizations related to blocks  
+  
+### `mixin.block.beehive`
+(default: `true`)  
+Beehives check if they are obstructed before performing expensive nbt copy operations for each exit attempt.  
   
 ### `mixin.block.flatten_states`
 (default: `true`)  
@@ -322,6 +338,10 @@ Accesses entities of the correct type directly instead of accessing all nearby e
 ### `mixin.entity.skip_equipment_change_check`
 (default: `true`)  
 Skips repeated checks whether the equipment of an entity changed. Instead equipment updates are detected  
+  
+### `mixin.entity.sprinting_particles`
+(default: `true`)  
+Skips trying to create sprinting particles for all entities on the server side.  
   
 ### `mixin.experimental`
 (default: `false`)  
