@@ -16,26 +16,54 @@ import java.util.Properties;
 
 public class LithiumConfig extends AbstractCaffeineConfigMixinPlugin {
 
+    // C2ME ships every module as its own mod id. First id is the Forge port (c2meF),
+    // second is the Fabric original as loaded through Sinytra Connector.
+    private static final String[] C2ME_NOTICKVD = {"c2me_notickvd", "c2me-notickvd"};
+    private static final String[] C2ME_OPTS_CHUNK_ACCESS = {"c2me_opts_chunk_access", "c2me-opts-chunk-access"};
+
+    private static String findLoadedMod(String... modIds) {
+        for (String modId : modIds) {
+            if (LoadingModList.get().getModFileById(modId) != null) {
+                return modId;
+            }
+        }
+
+        return null;
+    }
+
+    private CaffeineConfig applyC2MECompat(CaffeineConfig config) {
+        // notickvd keeps chunks past the simulation distance accessible but not ticking, and
+        // relies on its redirect in ThreadedAnvilChunkStorage.updateChunkTracking to send them.
+        // player_chunk_tick overwrites updatePosition and watches chunks through its own
+        // startWatchingChunk, which reads getWorldChunk() and gets null for everything that
+        // does not tick, so those chunks are never sent to the client.
+        String notickvd = findLoadedMod(C2ME_NOTICKVD);
+        if (notickvd != null) {
+            config.getOption("mixin.world.player_chunk_tick").addModOverride(false, notickvd);
+        }
+
+        // opts_chunk_access injects at HEAD of ServerChunkManager.getChunk to route off-thread
+        // requests into its own non-blocking path; chunk_access overwrites that method and drops
+        // the injection. Upstream C2ME papered over this with an ASM transformer, but c2meF has
+        // removed it, so off-thread chunk requests end up blocking on the server thread again.
+        String chunkAccess = findLoadedMod(C2ME_OPTS_CHUNK_ACCESS);
+        if (chunkAccess != null) {
+            config.getOption("mixin.world.chunk_access").addModOverride(false, chunkAccess);
+        }
+
+        return config;
+    }
+
     private CaffeineConfig applyLithiumCompat(CaffeineConfig config) {
         if (LoadingModList.get().getModFileById("ferritecore") != null) { // https://github.com/malte0811/FerriteCore/blob/1.20.0/Fabric/src/main/resources/fabric.mod.json#L38
             config.getOption("mixin.alloc.blockstate").addModOverride(false, "ferritecore");
         }
 
-        // Aperture Innovations: с включённым mixin.entity.collisions.movement
-        // в его порталы нельзя войти.
-        //
-        // Причина в том, что этот миксин делает @Overwrite вани́льного
-        // Entity.adjustMovementForCollisions, то есть заменяет тело метода
-        // целиком. Aperture врезается в тот же метод, чтобы пропускать
-        // игрока сквозь поверхность портала, и в переписанном теле её точка
-        // внедрения не находится — врезка молча не срабатывает.
-        //
-        // Обходной путь описан на странице самого мода: выставить
-        // mixin.entity.collisions.movement=false. Делаем это за игрока:
-        // знать о конфиге ради работающих порталов он не обязан.
-        if (LoadingModList.get().getModFileById("aperture_innovations") != null) {
+          if (LoadingModList.get().getModFileById("aperture_innovations") != null) {
             config.getOption("mixin.entity.collisions.movement").addModOverride(false, "aperture_innovations");
         }
+
+        applyC2MECompat(config);
 
         Option option = config.getOption("mixin.block.hopper.worldedit_compat");
         if (!option.isEnabled() && WorldEditCompat.WORLD_EDIT_PRESENT) {
