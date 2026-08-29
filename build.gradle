@@ -36,7 +36,7 @@ loom {
 
 group = project.maven_group
 version = "${project.mod_version}${getVersionMetadata()}"
-archivesBaseName = "${project.name}-mc${project.minecraft_version}"
+archivesBaseName = "radium-re-reforged-mc${project.minecraft_version}"
 
 sourceSets {
     api {
