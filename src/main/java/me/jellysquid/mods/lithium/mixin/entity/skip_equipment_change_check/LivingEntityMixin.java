@@ -1,6 +1,7 @@
 package me.jellysquid.mods.lithium.mixin.entity.skip_equipment_change_check;
 
 import me.jellysquid.mods.lithium.common.entity.EquipmentEntity;
+import me.jellysquid.mods.lithium.common.entity.VanillaEquipmentStorage;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
@@ -57,9 +58,9 @@ public abstract class LivingEntityMixin extends Entity implements EquipmentEntit
             )
     )
     private void resetEquipmentChanged(CallbackInfo ci) {
-        //Not implemented for player entities and modded entities, fallback to never skipping inventory comparison
+        //Not implemented for player entities and modded entities with their own equipment storage, fallback to never skipping inventory comparison
         //Work around dynamic items that are changed while holding them (only crossbow in 1.19.2)
-        if (this instanceof EquipmentTrackingEntity && !this.isHolding(DYNAMIC_EQUIPMENT)) {
+        if (this instanceof EquipmentTrackingEntity && VanillaEquipmentStorage.isUsedBy(this.getClass()) && !this.isHolding(DYNAMIC_EQUIPMENT)) {
             this.equipmentChanged = false;
         }
     }
