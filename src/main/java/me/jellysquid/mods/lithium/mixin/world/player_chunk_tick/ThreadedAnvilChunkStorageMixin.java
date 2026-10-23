@@ -4,14 +4,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import me.jellysquid.mods.lithium.common.util.Pos;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.PlayerChunkWatchingManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.chunk.WorldChunk;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,7 +21,9 @@ import static net.minecraft.server.world.ThreadedAnvilChunkStorage.isWithinDista
 @Mixin(ThreadedAnvilChunkStorage.class)
 public abstract class ThreadedAnvilChunkStorageMixin {
     @Shadow
-    protected abstract void sendChunkDataPackets(ServerPlayerEntity player, MutableObject<ChunkDataS2CPacket> cachedDataPacket, WorldChunk chunk);
+    protected abstract void sendWatchPackets(ServerPlayerEntity player, ChunkPos pos,
+                                             MutableObject<ChunkDataS2CPacket> cachedDataPacket,
+                                             boolean oldWithinViewDistance, boolean newWithinViewDistance);
 
     @Shadow
     protected abstract ChunkSectionPos updateWatchedSection(ServerPlayerEntity player);
@@ -133,20 +133,15 @@ public abstract class ThreadedAnvilChunkStorageMixin {
         }
     }
 
+    //Both directions go through the vanilla method instead of sending the packets directly. It is what decides
+    //whether the chunk is sent at all, and on Forge it also fires the chunk watch events, so mods hooking it
+    //(keeping a chunk loaded for a camera, swapping in a chunk that is loaded but not ticking, ...) still apply.
     protected void startWatchingChunk(ServerPlayerEntity player, int x, int z) {
-        ChunkHolder holder = this.getChunkHolder(ChunkPos.toLong(x, z));
-
-        if (holder != null) {
-            WorldChunk chunk = holder.getWorldChunk();
-
-            if (chunk != null) {
-                this.sendChunkDataPackets(player, new MutableObject<>(), chunk);
-            }
-        }
+        this.sendWatchPackets(player, new ChunkPos(x, z), new MutableObject<>(), false, true);
     }
 
     protected void stopWatchingChunk(ServerPlayerEntity player, int x, int z) {
-        player.sendUnloadChunkPacket(new ChunkPos(x, z));
+        this.sendWatchPackets(player, new ChunkPos(x, z), new MutableObject<>(), true, false);
     }
 
     @Shadow
@@ -170,7 +165,4 @@ public abstract class ThreadedAnvilChunkStorageMixin {
 
     @Shadow
     protected abstract boolean doesNotGenerateChunks(ServerPlayerEntity player);
-
-    @Shadow
-    protected abstract ChunkHolder getChunkHolder(long pos);
 }
