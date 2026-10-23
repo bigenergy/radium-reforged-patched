@@ -20,13 +20,19 @@ public class AbstractBlockStateMixin implements BlockStateFlagHolder {
     }
 
     private void initFlags() {
+        //Read the flags before setting the latch: another thread may already be inside
+        //BlockStateFlags' static initializer (chunk sections touch it off the server thread), and
+        //setting the latch while it is still constructing its predicates makes that initializer
+        //throw, which leaves the class permanently unusable. Reading the field first blocks until
+        //the initializer has finished on whichever thread started it.
+        TrackedBlockStatePredicate[] trackedFlags = BlockStateFlags.FLAGS;
         TrackedBlockStatePredicate.FULLY_INITIALIZED.set(true);
 
         int flags = 0;
 
-        for (int i = 0; i < BlockStateFlags.FLAGS.length; i++) {
+        for (int i = 0; i < trackedFlags.length; i++) {
             //noinspection ConstantConditions
-            if (BlockStateFlags.FLAGS[i].test((BlockState) (Object) this)) {
+            if (trackedFlags[i].test((BlockState) (Object) this)) {
                 flags |= 1 << i;
             }
         }
