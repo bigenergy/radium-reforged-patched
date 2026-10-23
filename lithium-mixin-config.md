@@ -532,8 +532,8 @@ BlockEntity sleeping for locked hoppers
 BlockEntity sleeping for closed shulker boxes  
   
 ### `mixin.world.block_entity_ticking.support_cache`
-(default: `false`)  
-BlockEntity ticking caches whether the BlockEntity can exist in the BlockState at the same location  
+(default: `true`)  
+BlockEntity ticking caches whether the BlockEntity can exist in the BlockState at the same location. This deviates from vanilla in the case of placing a hopper in a powered location, immediately updating the cached BlockState (which is incorrect in vanilla). This most likely does not affect your gameplay, as this deviation only affects hoppers, and in vanilla, hoppers never use the cached state information anyway.  
   
 ### `mixin.world.block_entity_ticking.world_border`
 (default: `true`)  

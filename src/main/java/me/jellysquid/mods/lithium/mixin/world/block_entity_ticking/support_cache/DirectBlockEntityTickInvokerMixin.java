@@ -33,7 +33,8 @@ public class DirectBlockEntityTickInvokerMixin<T extends BlockEntity> {
             )
     )
     private BlockState getCachedState(WorldChunk chunk, BlockPos pos) {
-        return this.blockEntity.getCachedState();
+        // Not BlockEntity.getCachedState(): block entities of mods override the getter and may return another state
+        return ((SupportCache) this.blockEntity).getCachedStateDirect();
     }
 
     @Redirect(
@@ -48,7 +49,7 @@ public class DirectBlockEntityTickInvokerMixin<T extends BlockEntity> {
             )
     )
     private boolean cachedIsSupported(BlockEntityType<?> blockEntityType, BlockState block) {
-        return ((SupportCache) this.blockEntity).isSupported();
+        return ((SupportCache) this.blockEntity).isSupported(blockEntityType);
     }
 
 }
