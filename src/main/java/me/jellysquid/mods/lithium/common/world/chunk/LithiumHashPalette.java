@@ -165,7 +165,10 @@ public class LithiumHashPalette<T> implements Palette<T> {
 
     @Override
     public Palette<T> copy() {
-        return new LithiumHashPalette<>(this.idList, this.resizeHandler, this.indexBits, this.entries.clone(), new Reference2IntOpenHashMap<>(this.table), this.size);
+        Reference2IntMap<T> table = new Reference2IntOpenHashMap<>(this.table);
+        table.defaultReturnValue(this.table.defaultReturnValue());
+        return new LithiumHashPalette<>(this.idList, this.resizeHandler, this.indexBits,
+                this.entries.clone(), table, this.size);
     }
 
     private void clear() {
