@@ -183,14 +183,10 @@ public abstract class ServerChunkManagerMixin {
         // Create a future to load the chunk if none exists
         if (loadFuture == null) {
             if (ChunkLevels.getStatus(holder.getLevel()).isAtLeast(status)) {
-                // Create a new future which upgrades the chunk from the previous status level to the desired one
-                CompletableFuture<Either<Chunk, ChunkHolder.Unloaded>> mergedFuture = this.threadedAnvilChunkStorage.getChunk(holder, status);
-
-                // Add this future to the chunk holder so subsequent calls will see it
-                holder.combineSavingFuture(mergedFuture, "schedule chunk status");
-                ((ChunkHolderExtended) holder).setFutureForStatus(status.getIndex(), mergedFuture);
-
-                loadFuture = mergedFuture;
+                // Create a new future which upgrades the chunk from the previous status level to the desired one.
+                // The holder schedules it and adds it to itself so subsequent calls will see it, as in vanilla,
+                // which keeps this path visible to mods that hook the scheduling (e.g. C2ME's holder lock)
+                loadFuture = holder.getChunkAt(status, this.threadedAnvilChunkStorage);
             } else {
                 if (statusFuture == null) {
                     return null;

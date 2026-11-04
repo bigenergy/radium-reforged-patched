@@ -98,6 +98,12 @@ public class LithiumConfig extends AbstractCaffeineConfigMixinPlugin {
     private static final String[] C2ME_NOTICKVD = {"c2me_notickvd", "c2me-notickvd"};
     private static final String[] C2ME_OPTS_CHUNK_ACCESS = {"c2me_opts_chunk_access", "c2me-opts-chunk-access"};
 
+    // The all-in-one jar installs every module, also the ones c2me.toml switches off. A module
+    // keeps that switch, which decides whether its mixins apply, in the ModuleEntryPoint class
+    // of its package.
+    private static final String C2ME_NOTICKVD_PACKAGE = "com.ishland.c2me.notickvd";
+    private static final String C2ME_OPTS_CHUNK_ACCESS_PACKAGE = "com.ishland.c2me.opts.chunk_access";
+
     private static String findLoadedMod(String... modIds) {
         for (String modId : modIds) {
             if (LoadingModList.get().getModFileById(modId) != null) {
@@ -108,6 +114,25 @@ public class LithiumConfig extends AbstractCaffeineConfigMixinPlugin {
         return null;
     }
 
+    private static boolean isC2MEModuleEnabled(CaffeineConfig config, String modId, String modulePackage) {
+        try {
+            Class<?> entryPoint = Class.forName(modulePackage + ".ModuleEntryPoint", true,
+                    LithiumConfig.class.getClassLoader());
+
+            if (entryPoint.getField("enabled").get(null) instanceof Boolean enabled) {
+                return enabled;
+            }
+
+            config.getLogger().warn("C2ME module '{}' has no boolean switch, assuming it is enabled", modId);
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            config.getLogger().warn("Could not read whether C2ME module '{}' is enabled ({}), assuming it is",
+                    modId, e.toString());
+        }
+
+        // Rather lose our own patch than run it next to the module it conflicts with
+        return true;
+    }
+
     private CaffeineConfig applyC2MECompat(CaffeineConfig config) {
         // notickvd keeps chunks past the simulation distance accessible but not ticking, and
         // relies on its redirect in ThreadedAnvilChunkStorage.updateChunkTracking to send them.
@@ -115,7 +140,7 @@ public class LithiumConfig extends AbstractCaffeineConfigMixinPlugin {
         // startWatchingChunk, which reads getWorldChunk() and gets null for everything that
         // does not tick, so those chunks are never sent to the client.
         String notickvd = findLoadedMod(C2ME_NOTICKVD);
-        if (notickvd != null) {
+        if (notickvd != null && isC2MEModuleEnabled(config, notickvd, C2ME_NOTICKVD_PACKAGE)) {
             config.getOption("mixin.world.player_chunk_tick").addModOverride(false, notickvd);
         }
 
@@ -124,7 +149,7 @@ public class LithiumConfig extends AbstractCaffeineConfigMixinPlugin {
         // the injection. Upstream C2ME papered over this with an ASM transformer, but c2meF has
         // removed it, so off-thread chunk requests end up blocking on the server thread again.
         String chunkAccess = findLoadedMod(C2ME_OPTS_CHUNK_ACCESS);
-        if (chunkAccess != null) {
+        if (chunkAccess != null && isC2MEModuleEnabled(config, chunkAccess, C2ME_OPTS_CHUNK_ACCESS_PACKAGE)) {
             config.getOption("mixin.world.chunk_access").addModOverride(false, chunkAccess);
         }
 
