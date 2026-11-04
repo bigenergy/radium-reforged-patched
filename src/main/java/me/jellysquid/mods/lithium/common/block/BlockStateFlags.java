@@ -109,9 +109,17 @@ public class BlockStateFlags {
             //1) Run in the debugger: System.out.println(FabricLoader.getInstance().getMappingResolver().getNamespaceData("intermediary").methodNames)
             //2) Ctrl+F for the method name, in this case "onEntityCollision". Make sure to find the correct one.
             private final String remapped_onEntityCollision = ObfuscationReflectionHelper.remapName(INameMappingService.Domain.METHOD, "m_7892_");
+            private final ClassValue<Boolean> entityTouchable = new ClassValue<>() {
+                @Override
+                protected Boolean computeValue(Class<?> type) {
+                    return ReflectionUtil.hasMethodOverride(type, AbstractBlock.class, true, remapped_onEntityCollision,
+                            BlockState.class, World.class, BlockPos.class, Entity.class);
+                }
+            };
+
             @Override
             public boolean test(BlockState operand) {
-                return ReflectionUtil.hasMethodOverride(operand.getBlock().getClass(), AbstractBlock.class, true, this.remapped_onEntityCollision, BlockState.class, World.class, BlockPos.class, Entity.class);
+                return this.entityTouchable.get(operand.getBlock().getClass());
             }
         };
         flags.add(ENTITY_TOUCHABLE);
