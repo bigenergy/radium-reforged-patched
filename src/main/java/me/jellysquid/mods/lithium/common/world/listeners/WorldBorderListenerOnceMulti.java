@@ -53,7 +53,7 @@ public class WorldBorderListenerOnceMulti implements WorldBorderListener {
         for (WorldBorderListenerOnce listener : this.delegate.keySet()) {
             listener.onWarningTimeChanged(border, warningTime);
         }
-        this.delegate.clear();
+        // Keep subscribers until the border shape changes and their cached bounds are invalidated.
     }
 
     @Override
@@ -61,7 +61,7 @@ public class WorldBorderListenerOnceMulti implements WorldBorderListener {
         for (WorldBorderListenerOnce listener : this.delegate.keySet()) {
             listener.onWarningBlocksChanged(border, warningBlockDistance);
         }
-        this.delegate.clear();
+        // Keep subscribers until the border shape changes and their cached bounds are invalidated.
     }
 
     @Override
@@ -69,7 +69,7 @@ public class WorldBorderListenerOnceMulti implements WorldBorderListener {
         for (WorldBorderListenerOnce listener : this.delegate.keySet()) {
             listener.onDamagePerBlockChanged(border, damagePerBlock);
         }
-        this.delegate.clear();
+        // Keep subscribers until the border shape changes and their cached bounds are invalidated.
     }
 
     @Override
@@ -77,6 +77,6 @@ public class WorldBorderListenerOnceMulti implements WorldBorderListener {
         for (WorldBorderListenerOnce listener : this.delegate.keySet()) {
             listener.onSafeZoneChanged(border, safeZoneRadius);
         }
-        this.delegate.clear();
+        // Keep subscribers until the border shape changes and their cached bounds are invalidated.
     }
 }
