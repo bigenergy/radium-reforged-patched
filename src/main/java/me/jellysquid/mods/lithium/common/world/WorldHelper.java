@@ -42,7 +42,16 @@ public class WorldHelper {
             SectionedEntityCache<Entity> cache = getEntityCacheOrNull(world);
             if (cache != null) {
                 world.getProfiler().visit("getEntities");
-                return getEntitiesOfClassGroup(cache, collidingEntity, EntityClassGroup.NoDragonClassGroup.BOAT_SHULKER_LIKE_COLLISION, box);
+                EntityClassGroup.NoDragonClassGroup group = EntityClassGroup.NoDragonClassGroup.BOAT_SHULKER_LIKE_COLLISION;
+                List<Entity> entities = getEntitiesOfClassGroup(cache, collidingEntity, group, box);
+                // [VanillaCopy] Forge keeps multipart children outside the entity section storage.
+                for (Entity part : world.getPartEntities()) {
+                    if (part != collidingEntity && part.getBoundingBox().intersects(box)
+                            && group.contains(part.getClass()) && !part.isSpectator()) {
+                        entities.add(part);
+                    }
+                }
+                return entities;
             }
         }
         //use vanilla code in case the shortcut is not applicable
